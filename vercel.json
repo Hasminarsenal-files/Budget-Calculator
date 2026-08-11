@@ -1,6 +1,8 @@
 {
   "version": 2,
   "framework": null,
+  "buildCommand": "npm run build",
+  "outputDirectory": "public",
   "functions": {
     "api/index.php": {
       "runtime": "vercel-php@0.7.2"
@@ -23,8 +25,10 @@
   "env": {
     "APP_ENV": "production",
     "APP_DEBUG": "false",
-    "DB_CONNECTION": "pgsql",
+    "DB_CONNECTION": "sqlite",
+    "DB_DATABASE": "/tmp/database.sqlite",
     "LOG_CHANNEL": "stderr",
     "SESSION_DRIVER": "cookie"
   }
 }
+
