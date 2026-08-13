@@ -24,7 +24,7 @@
   ],
   "env": {
     "APP_ENV": "production",
-    "APP_DEBUG": "false",
+    "APP_DEBUG": "true",
     "APP_KEY": "base64:TVDFcY53He+ouaVm4EF6MaQ30le5NPNt5VXwZDJxEvI=",
     "DB_CONNECTION": "sqlite",
     "DB_DATABASE": "/tmp/database.sqlite",
