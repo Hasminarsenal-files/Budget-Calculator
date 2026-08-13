@@ -20,13 +20,6 @@ foreach ($dirs as $dir) {
     }
 }
 
-$dbPath = '/tmp/database.sqlite';
-$isNewDb = !file_exists($dbPath) || filesize($dbPath) === 0;
-
-if (!file_exists($dbPath)) {
-    touch($dbPath);
-}
-
 // Redirect bootstrap cache and storage paths to writable /tmp
 putenv('APP_SERVICES_CACHE=/tmp/bootstrap/cache/services.php');
 putenv('APP_PACKAGES_CACHE=/tmp/bootstrap/cache/packages.php');
@@ -49,12 +42,21 @@ require __DIR__.'/../vendor/autoload.php';
 /** @var Application $app */
 $app = require_once __DIR__.'/../bootstrap/app.php';
 
-// Auto-run database migrations for fresh serverless SQLite instance
-if ($isNewDb) {
-    try {
-        Artisan::call('migrate', ['--force' => true]);
-    } catch (\Throwable $e) {
-        error_log('Vercel SQLite migration warning: ' . $e->getMessage());
+// If DB connection is SQLite, ensure SQLite file exists
+if (env('DB_CONNECTION') === 'sqlite') {
+    $dbPath = env('DB_DATABASE', '/tmp/database.sqlite');
+    if ($dbPath === '/tmp/database.sqlite') {
+        $isNewDb = !file_exists($dbPath) || filesize($dbPath) === 0;
+        if (!file_exists($dbPath)) {
+            touch($dbPath);
+        }
+        if ($isNewDb) {
+            try {
+                Artisan::call('migrate', ['--force' => true]);
+            } catch (\Throwable $e) {
+                error_log('Vercel SQLite migration notice: ' . $e->getMessage());
+            }
+        }
     }
 }
 

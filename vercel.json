@@ -24,12 +24,9 @@
   ],
   "env": {
     "APP_ENV": "production",
-    "APP_DEBUG": "true",
-    "APP_KEY": "base64:TVDFcY53He+ouaVm4EF6MaQ30le5NPNt5VXwZDJxEvI=",
-    "DB_CONNECTION": "sqlite",
-    "DB_DATABASE": "/tmp/database.sqlite",
+    "APP_DEBUG": "false",
+    "DB_CONNECTION": "pgsql",
     "LOG_CHANNEL": "stderr",
     "SESSION_DRIVER": "cookie"
   }
 }
-

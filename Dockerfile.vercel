@@ -1,0 +1,63 @@
+# Multi-stage Dockerfile for Vercel Container deployment of Laravel application
+
+# Stage 1: Build frontend assets with Vite
+FROM node:20-alpine AS frontend
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --ignore-scripts || npm install
+COPY . .
+RUN npm run build
+
+# Stage 2: Install PHP dependencies with Composer
+FROM php:8.3-cli-alpine AS vendor
+WORKDIR /app
+RUN apk add --no-cache unzip git curl libpng-dev libzip-dev
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --no-scripts
+
+# Stage 3: Final Production Runtime Container
+FROM php:8.3-cli-alpine
+
+RUN apk add --no-cache \
+    curl \
+    libpng-dev \
+    libzip-dev \
+    postgresql-dev \
+    oniguruma-dev \
+    icu-dev \
+    libxml2-dev \
+    && docker-php-ext-install pdo pdo_pgsql pdo_mysql mbstring gd zip intl opcache
+
+WORKDIR /var/www/html
+
+# Copy application source
+COPY . .
+
+# Copy built vendor dependencies
+COPY --from=vendor /app/vendor /var/www/html/vendor
+
+# Copy compiled frontend assets
+COPY --from=frontend /app/public/build /var/www/html/public/build
+
+# Setup storage and cache permissions
+RUN mkdir -p storage/framework/views storage/framework/sessions storage/framework/cache storage/logs bootstrap/cache \
+    && chmod -R 777 storage bootstrap/cache
+
+# Production environment variables defaults
+ENV PORT=8000 \
+    APP_ENV=production \
+    APP_DEBUG=false \
+    LOG_CHANNEL=stderr \
+    DB_CONNECTION=pgsql \
+    VIEW_COMPILED_PATH=/tmp/storage/framework/views \
+    SESSION_DRIVER=cookie
+
+EXPOSE 8000
+
+# Copy entrypoint script
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+ENTRYPOINT ["docker-entrypoint.sh"]
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
